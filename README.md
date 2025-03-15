@@ -67,9 +67,20 @@ python phone_assistant.py --mock
 ## Usage Example 💬
 ```bash
 I specialize in information about new smartphone models. Ask me about latest releases:
-> What's new from Samsung?
+what are latest models
 📱 Latest Phone Models:
-1. 🌟 Galaxy S25
+
+1. 🌟 Pixel 9 Pro
+Brand: Google
+Released: 2024-10-01
+Features: ['Tensor G4 chip', '200MP camera', '6.7', 'LTPO OLED']
+
+2. 🌟 iPhone 16 Ultra
+Brand: Apple
+Released: 2024-09-15
+Features: ['A18 Bionic', 'Under-display Face ID', '10x optical zoom']
+
+3. 🌟 Galaxy S25
 Brand: Samsung
 Released: 2025-01-28
 Features: ['Snapdragon 8 Gen 4', '200W fast charging', 'AI Camera Suite']
