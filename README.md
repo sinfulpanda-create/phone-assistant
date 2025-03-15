@@ -23,7 +23,7 @@ An AI-powered assistant system that combines DeepSeek's natural language underst
 
 ### 1. Clone Repository
 ```bash
-git clone 
+git clone https://github.com/sinfulpanda-create/phone-assistant.git
 cd phone-model-assistant
 ```
 
