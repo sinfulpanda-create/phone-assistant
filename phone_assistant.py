@@ -3,17 +3,18 @@ import json
 import requests
 import sqlite3
 from datetime import datetime, timedelta
-from openai import OpenAI
 from dotenv import load_dotenv
 
 load_dotenv()
 
 class PhoneModelAssistant:
     def __init__(self):
-        self.openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        self.openrouter_api_key = os.getenv("OPENROUTER_API_KEY")
+        self.openrouter_url = "https://openrouter.ai/api/v1/chat/completions"
         self.phone_api_url = os.getenv("PHONE_API_URL", "https://mock-api.example.com/new-phones")
         self.cache_expiry_hours = 24  # Cache duration in hours
         self.setup_database()
+        
 
     def setup_database(self):
         """Initialize SQLite database and create cache table"""
@@ -37,6 +38,8 @@ class PhoneModelAssistant:
                                  ORDER BY timestamp DESC 
                                  LIMIT 1''')
                 result = cursor.fetchone()
+                
+                #print(json.loads(result[0]))
                 
                 if result and self._is_cache_valid(result[1]):
                     return json.loads(result[0])
@@ -62,13 +65,42 @@ class PhoneModelAssistant:
                 conn.commit()
         except (sqlite3.Error, TypeError) as e:
             print(f"Cache storage error: {e}")
+            
+    def detect_intent(self, query):
+        """Use AI model to detect if user is asking about new phone models"""
+        try:
+            response = requests.post(
+                self.openrouter_url,
+                headers={
+                    "Authorization": f"Bearer {self.openrouter_api_key}",
+                    "HTTP-Referer": "https://github.com/your-repo",
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "model": "deepseek/deepseek-r1:free",
+                    "messages": [{
+                        "role": "system",
+                        "content": """Analyze if the user is asking about any information about phones. even if he asks just about new releases or models consider it as regarding phones 
+                                    Respond with 'YES' or 'NO' only."""
+                    }, {
+                        "role": "user",
+                        "content": query
+                    }]
+                }
+            )
+            response.raise_for_status()
+            #print(response.json()['choices'][0]['message']['content'])
+            return response.json()['choices'][0]['message']['content'].strip().upper() == "YES"
+        except Exception as e:
+            print(f"Error in intent detection: {e}")
+            return False
 
     def fetch_latest_models(self):
         """Fetch models with cache-first strategy"""
         # Try to get valid cached data first
         cached_data = self.get_cached_data()
         if cached_data:
-            print("Using cached data")
+            print("Showing cached information (updated within 24 hours)")
             return cached_data
 
         # Fallback to API call if no valid cache
@@ -101,8 +133,9 @@ class PhoneModelAssistant:
         if not models:
             return "Sorry, I couldn't find any information about new phones right now. 🫤"
             
-        if self.get_cached_data() is not None:
-            response.append("ℹ️ Showing cached information (updated within 24 hours)\n")
+        #print(self.get_cached_data())
+        #if self.get_cached_data() is not None:
+            #response.append("ℹ️ Showing cached information (updated within 24 hours)\n")
             
         response.append("📱 Latest Phone Models:\n")
         for idx, model in enumerate(models[:5], 1):
@@ -116,21 +149,16 @@ class PhoneModelAssistant:
             
         return "\n".join(response)
 
-    # Rest of the class remains same as previous implementation
+    def handle_query(self, user_query):
+        """Main function to process user query"""
+        if not self.detect_intent(user_query):
+            return "I specialize in information about new smartphone models. Ask me about latest releases!"
+            
+        models = self.fetch_latest_models()
+        return self.format_response(models)
 
-# Updated setup instructions
-"""
-## Updated Setup Instructions
-
-1. Database Setup:
-   - The system will automatically create 'phone_cache.db' on first run
-   - Cache expires after 24 hours (adjust in CACHE_EXPIRY_HOURS)
-
-2. Cache Management:
-   - Automatic cleanup of old entries not implemented (consider adding)
-   - Cache persists between sessions
-   - Delete 'phone_cache.db' to clear cache
-
-3. New Dependencies:
-   - No additional dependencies needed (uses SQLite3 from standard library)
-"""
+# Example usage
+if __name__ == "__main__":
+    assistant = PhoneModelAssistant()
+    user_input = input("I specialize in information about new smartphone models. Ask me about latest releases: ")
+    print(assistant.handle_query(user_input))

@@ -1,5 +1,5 @@
 # mock_api.py
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 import time
 import random
 
@@ -11,7 +11,7 @@ SAMPLE_DATA = [
         "name": "Pixel 9 Pro",
         "brand": "Google",
         "release_date": "2024-10-01",
-        "key_features": ["Tensor G4 chip", "200MP camera", "6.7" LTPO OLED"]
+        "key_features": ["Tensor G4 chip", "200MP camera", "6.7" ,"LTPO OLED"]
     },
     {
         "name": "iPhone 16 Ultra",
